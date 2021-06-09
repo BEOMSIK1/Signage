@@ -56,10 +56,10 @@ elseif mod_scheme == 6     % 64QAM demodulation
     
     first = (RE>0)*1;
     second = (abs(RE)<0.6172)*1;
-    third = ((abs(RE)>0.3086)&(abs(RE)<0.9528))*1;
+    third = ((abs(RE)>0.3086)&(abs(RE)<0.9258))*1;
     fourth = (IM>0)*1;
     fifth = (abs(IM)<0.6172)*1;
-    sixth = ((abs(IM)>0.3086)&(abs(IM)<0.9528))*1;
+    sixth = ((abs(IM)>0.3086)&(abs(IM)<0.9258))*1;
     temp = [first;second;third;fourth;fifth;sixth];
 
     demod_data = reshape(temp,MP_row,MP_col*6);

@@ -1,6 +1,5 @@
 function [mod_data] = base_mod(data,mod_scheme)
 
-
 if mod_scheme == 1       % BPSK modulation
     mod_data = data*2-1;
 
@@ -17,7 +16,7 @@ elseif mod_scheme == 2   % QPSK modulation
     even_data=data(:,2:2:MP_col);  % 짝수만 분리
     even_data=even_data*2-1;
 
-    mod_data=(odd_data+even_data) / sqrt(2);
+    mod_data=(odd_data+even_data).*0.7071;
     
 elseif mod_scheme == 4   % 16QAM modulation
     % 가로가 4의 배수가 아니라면 뒤에 0을 채워 4의 배수로 만들어줌
@@ -36,7 +35,7 @@ elseif mod_scheme == 4   % 16QAM modulation
     fourth_data = data(:,4:4:MP_col);    % 4th
     fourth = ((fourth_data~=third_data)*2-1)*j;
     
-    mod_data=(first+second+third+fourth) / sqrt(10);
+    mod_data=(first+second+third+fourth).*0.3162;
   
 elseif mod_scheme == 6   % 64QAM modulation
     % 가로가 6의 배수가 아니라면 뒤에 0을 채워 6의 배수로 만들어줌
@@ -59,7 +58,7 @@ elseif mod_scheme == 6   % 64QAM modulation
     sixth_data=data(:,6:6:MP_col);     % 6th
     sixth=((xor(xor(fourth_data,fifth_data),sixth_data))*2-1)*j;
 
-    mod_data=(first+second+third+fourth+fifth+sixth) / sqrt(42);
+    mod_data=(first+second+third+fourth+fifth+sixth).*0.1543;
     
 elseif mod_scheme == 8   % 256QAM modulation
     % 가로가 8의 배수가 아니라면 뒤에 0을 채워 8의 배수로 만들어줌
@@ -86,7 +85,7 @@ elseif mod_scheme == 8   % 256QAM modulation
     eighth_data=data(:,8:8:MP_col);     % 8th
     eighth=((xor(xor(xor(fifth_data,sixth_data),seventh_data),eighth_data))*2-1)*j;
     
-    mod_data=(first+second+third+fourth+fifth+sixth+seventh+eighth) / sqrt(170);
+    mod_data=(first+second+third+fourth+fifth+sixth+seventh+eighth).*0.0767;
         
 else
     disp('매개변수를 확인해 주세요');
