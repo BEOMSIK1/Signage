@@ -1,0 +1,25 @@
+ber_test=[0.428007812500000,0.361048177083333,0.247285156250000,0.129072265625000,0.0353222656250000,0.00157877604166667,0];
+cap_test=[0.763668640165298,2.07421048663744,4.78059578143717,9.06992875650547,14.5764284998078,20.7681051523560,27.2544732233913];
+ber_ref=[0.436809895833333,0.384277343750000,0.302350260416667,0.178274739583333,0.0552408854166667,0.00371744791666667,2.60416666666667e-05];
+
+cap_ref=[0.157870495885438,0.484335012338227,1.40490456780333,3.59556717965744,7.56545037542098,13.0040168999592,19.2039258627348];
+
+snr = -20:5:10;
+
+plot(snr, cap_ref, 'r-*','LineWidth',4);
+hold on
+plot(snr, cap_test, 'b-*','LineWidth',4);
+title('Sum Rate Performance')
+legend('ZF(16X4,QPSK)','ZF(64X4,16QAM')
+ylabel('Average Spectral Efficiency (bps/Hz)')
+xlabel('SNR (dB)')
+grid on
+figure
+semilogy(snr, ber_ref, 'r-*','LineWidth',4);
+hold on
+semilogy(snr, ber_test, 'b-*','LineWidth',4);
+title('BER Performance')
+legend('ZF(16X4,QPSK)','ZF(64X4,16QAM')
+ylabel('BER')
+xlabel('SNR (dB)')
+grid on
