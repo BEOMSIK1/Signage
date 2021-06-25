@@ -5,16 +5,16 @@ fft_size = 64;
 mod_type = 4;                     %1 - BPSK, 2 - QPSK, 4 - 16QAM, 6 - 64QAM, 8 - 256QAM
 cp_size = fft_size / 4;
 data_size = fft_size*mod_type;
-tx_ant = 16;
+tx_ant = 64;
 rx_ant = 1;
-N_u = 4;
+N_u = 8;
 N_rf = 2*N_u;
 N_s = N_u;
-snr = -10:5:20;
+snr = 0:2:20;
 path = 7;
 scatter = 10;
 
-iter = 500;
+iter = 300;
 
 %% SCM
 model = SCM();
@@ -24,10 +24,10 @@ model.ant(rx_ant,tx_ant);
 N_tx = model.Ntx;
 N_rx = model.Nrx;
 %% test
-model.asd = 3;
-model.zsd = 3;
-model.asa = 3;
-model.zsa = 3;
+model.asd = 15;
+model.zsd = 5;
+model.asa = 15;
+model.zsa = 5;
 
 % model.fc = 30*10^9;
 % model.fs = 0.25*10^9;
@@ -37,7 +37,7 @@ model.rx_ant(3) = 0.5;
 model.los = 0;
 %% simulation parameters
 
-L = N_tx/(2*N_rf); % ps num per rf chain
+L = N_tx/(1*N_rf); % ps num per rf chain
 SW = N_tx/(N_rf*L); % switch num per ps
 
 %% Initialize
@@ -129,7 +129,7 @@ SR = SR / iter;
 BER = (sum(num_error,1)/(data_size*N_s))/iter;
 %% Plot
 figure(1)
-plot(snr, SR, 'k--+');
+plot(snr, SR, '-o');
 title('Sum Rate Performance')
 legend('test')
 ylabel('Average Spectral Efficiency (bps/Hz)')
@@ -139,7 +139,7 @@ hold on
 
 figure(2)
 
-semilogy(snr, BER, 'k--+');
+semilogy(snr, BER, '-o');
 title('BER Performance')
 legend('test')
 ylabel('BER')

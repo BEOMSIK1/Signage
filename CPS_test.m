@@ -1,15 +1,16 @@
 clc, clear
-%% CPS test code
+%% SVD Analog precoder
+%% Parameters
 fft_size = 64;
 mod_type = 4;                     %1 - BPSK, 2 - QPSK, 4 - 16QAM, 6 - 64QAM, 8 - 256QAM
 cp_size = fft_size / 4;
 data_size = fft_size*mod_type;
-UE = 4;
-tx_ant = 16;
+tx_ant = 8;
 rx_ant = 1;
-N_u = UE;
-N_s = UE;
-snr = -10:5:20;
+N_u = 8;
+N_rf = 2*N_u;
+N_s = N_u;
+snr = 0:2:20;
 path = 7;
 scatter = 10;
 iter = 300;
@@ -27,13 +28,12 @@ model.zsd = 5;
 model.asa = 15;
 model.zsa = 5;
 
- %model.fc = 28*10^9;
- %model.fs = 0.25*10^9;
+%model.fc = 28*10^9;
+%model.fs = 0.25*10^9;
 
 model.tx_ant(3) = 0.5;
 model.rx_ant(3) = 0.5;
 model.los = 0;
-
 
 
 %% Initialize
@@ -44,31 +44,61 @@ SR = zeros(1, length(snr) );
 %% Iter
 tic
 for i = 1:iter
-        %% channel
-        for d= 1:N_u
-            temp = model.FD_channel(fft_size + cp_size);
-            h(:,:,1+(d-1)*N_rx:d*N_rx,:) = temp;
-        end
-        h_(:,:,:) = h(:,1,:,:);
-        H = fft(h_, fft_size, 1);
-        %% Data
-        data = randi([0 1], N_s, data_size);
-        sym = base_mod(data, mod_type);
-    
+    %% channel
+    for d= 1:N_u
+        temp = model.FD_channel(fft_size + cp_size);
+        h(:,:,1+(d-1)*N_rx:d*N_rx,:) = temp;
+    end
+    h_(:,:,:) = h(:,1,:,:);
+    H = fft(h_, fft_size, 1);
+    %% Data
+    data = randi([0 1], N_s, data_size);
+    sym = base_mod(data, mod_type);
     %% iter (snr)
     for snr_index = 1:length(snr)
-        %% Precoding(ZF)
+        %% Precoding
         n = 1;
+        %% RF
+        R = zeros(N_tx,N_tx);         % mean channel (cov)
         for k = 1:fft_size
             H_(:,:) = H(k,:,:);
-            G = H_'*inv(H_*H_');
-            gamma(n) = trace(G*G');
-            pc_sym(:,k) = G*(sym(:,k));
+            R = R + (H_'*H_);
+        end
+        R = R/fft_size;
+        [~,~,V] = svd(R);
+        
+        %F = V(:,1:N_rf);
+        %F_hat =exp(j.*angle(F));
+        %% Phase
+        B = 1;
+        ang_idx = 0:2^B-1;
+        ang = ang_idx * (2*pi/(2^B));
+        ang = ang.';           % fixed angle
+        %% Switch
+        sw1 = zeros(N_tx,2^B,N_rf);  % initialize
+        for rf = 1:N_rf        
+            for ant = 1:N_tx
+                [~,minidx] = min(abs(exp(j*angle(V(ant,rf))) - exp(j*ang)));
+                sw1(ant,minidx,rf) = 1;       % switch (ps -> ant)
+            end
+            
+        end
+        for rf = 1:N_rf
+            F_hat(:,rf) = exp(j.*(sw1(:,:,rf) * ang));
+        end
+        
+        %% BB
+        for k = 1:fft_size
+            H_(:,:) = H(k,:,:);
+            He_ = H_*F_hat;
+            G = (He_'*inv(He_*He_'));
+            NF(n) = trace(F_hat*G*G'*F_hat');
+            pc_sym(:,k) = G*(sym(:,k)/sqrt(NF(n)));
             n = n+1;
         end
-        pc_sym = pc_sym./sqrt(gamma);
         ofdm_sym = ifft(pc_sym,fft_size,2)*sqrt(fft_size);
-        cp_sym = [ofdm_sym(:,fft_size-cp_size+1:end) ofdm_sym];
+        cp_sym_ = [ofdm_sym(:,fft_size-cp_size+1:end) ofdm_sym];
+        cp_sym = F_hat*cp_sym_;
         
         
         %% Pass Channel
@@ -79,32 +109,33 @@ for i = 1:iter
             end
             hx(r,:) = sum(receive,1);
         end
-        
-        
         %% Receive
-        %         [y, No] = awgn_noise( model.FD_fading( cp_sym, h), snr(snr_index));
         [y, No] = awgn_noise( hx, snr(snr_index) );
         cp_remove = y(:,cp_size+1:fft_size+cp_size);
-        y_hat = cp_remove.* sqrt(gamma);
-        ofdm_sym_rx = fft(y_hat,fft_size,2)/sqrt(fft_size);
+        y_hat = cp_remove.* sqrt(NF);
+        ofdm_sym_rx = fft(y_hat,fft_size,2)./sqrt(fft_size);
         rx_data = base_demod(ofdm_sym_rx, mod_type);
         
-        %         s = model.FD_fading( cp_sym, h);
         s = hx(:,cp_size+1:fft_size+cp_size);
         S = fft(s,fft_size,2)/sqrt(fft_size);
         
-        SR(snr_index) = SR(snr_index) + mean( sum( log2( 1 + abs(S).^2 / No )) );
-        BER(snr_index) = BER(snr_index) + sum( sum( data ~= rx_data ) )/ (data_size * N_s);
+        SR(snr_index) = SR(snr_index) + mean( sum( log2( 1 + abs(S).^2 / (No*rx_ant) )) )/iter;
+        num_error(i,snr_index) = biterr(data,rx_data);
+        
+        
+        
+        %         BER(snr_index) = BER(snr_index) + sum( sum( data ~= rx_data ) )/ (data_size * N_s);
     end
 end
 toc
-BER = BER / iter;
-SR = SR / iter;
+% BER = BER / iter;
+% SR = SR / iter;
+BER = (sum(num_error,1)/(data_size*N_s))/iter;
 %% Plot
 figure(1)
-plot(snr, SR, 'r-');
+plot(snr, SR, '-o');
 title('Sum Rate Performance')
-legend('ZF')
+legend('test')
 ylabel('Average Spectral Efficiency (bps/Hz)')
 xlabel('SNR (dB)')
 grid on
@@ -112,9 +143,9 @@ hold on
 
 figure(2)
 
-semilogy(snr, BER, 'r-');
+semilogy(snr, BER, '-o');
 title('BER Performance')
-legend('ZF')
+legend('test')
 ylabel('BER')
 xlabel('SNR (dB)')
 grid on

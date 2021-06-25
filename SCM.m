@@ -200,7 +200,8 @@ classdef SCM < handle
         function [Rx_ant, Tx_ant] = ant(obj, N_rx, N_tx)
             % 입력으로 받은 송수신 단의 안테나 수를 1차원 배열 안테나로 가정
             Rx_ant = [N_rx 1 0.5 0.5];
-            Tx_ant = [N_tx 1 0.5 0.5];
+            Tx_ant = [N_tx N_tx 0.5 0.5];       % UPA
+            %Tx_ant = [N_tx 1 0.5 0.5];         % ULA
             
             % 환경변수에 값을 저장
             obj.rx_ant = Rx_ant;

@@ -4,12 +4,12 @@ fft_size = 64;
 mod_type = 4;                     %1 - BPSK, 2 - QPSK, 4 - 16QAM, 6 - 64QAM, 8 - 256QAM
 cp_size = fft_size / 4;
 data_size = fft_size*mod_type;
-UE = 4;
-tx_ant = 16;
+UE = 8;
+tx_ant = 8;
 rx_ant = 1;
 N_u = UE;
 N_s = UE;
-snr = -10:5:20;
+snr = 0:2:20;
 path = 7;
 scatter = 10;
 iter = 300;
@@ -23,6 +23,17 @@ N_tx = model.Ntx;
 N_rx = model.Nrx;
 %% test
 
+model.asd = 15;
+model.zsd = 5;
+model.asa = 15;
+model.zsa = 5;
+
+ %model.fc = 28*10^9;
+ %model.fs = 0.25*10^9;
+
+model.tx_ant(3) = 0.5;
+model.rx_ant(3) = 0.5;
+model.los = 0;
 
 
 
@@ -92,7 +103,7 @@ BER = BER / iter;
 SR = SR / iter;
 %% Plot
 figure(1)
-plot(snr, SR, 'r-');
+plot(snr, SR, '-d');
 title('Sum Rate Performance')
 legend('ZF')
 ylabel('Average Spectral Efficiency (bps/Hz)')
@@ -102,7 +113,7 @@ hold on
 
 figure(2)
 
-semilogy(snr, BER, 'r-');
+semilogy(snr, BER, '-d');
 title('BER Performance')
 legend('ZF')
 ylabel('BER')

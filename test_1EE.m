@@ -5,7 +5,7 @@ fft_size = 64;
 mod_type = 4;                     %1 - BPSK, 2 - QPSK, 4 - 16QAM, 6 - 64QAM, 8 - 256QAM
 cp_size = fft_size / 4;
 data_size = fft_size*mod_type;
-tx_ant = 64;
+tx_ant = 8;
 rx_ant = 1;
 N_u = 8;
 N_rf = N_u:2*N_u;
@@ -32,13 +32,13 @@ model.ant(rx_ant,tx_ant);
 N_tx = model.Ntx;
 N_rx = model.Nrx;
 %% test
-model.asd = 3;
-model.zsd = 3;
-model.asa = 3;
-model.zsa = 3;
+model.asd = 15;
+model.zsd = 5;
+model.asa = 15;
+model.zsa = 5;
 
-model.fc = 30*10^9;
-model.fs = 0.25*10^9;
+%model.fc = 28*10^9;
+%model.fs = 0.25*10^9;
 
 model.tx_ant(3) = 0.5;
 model.rx_ant(3) = 0.5;
@@ -165,7 +165,7 @@ toc
 ee = sum(ee_)/iter;
 %% Plot
 figure(1)
-plot(N_rf,ee, 'b-o','LineWidth',1.5)
+plot(N_rf,ee, '-o')
 title('Energy Efficiency Performance')
 legend('Opt')
 ylabel('Energy Efficiency (bps/Hz/W)')
@@ -174,7 +174,7 @@ grid on
 hold on
 
 figure(2)
-plot(N_rf, SR1, 'b-o','LineWidth',1.5);
+plot(N_rf, SR1, '-o');
 title('Sum Rate Performance')
 legend('Opt')
 ylabel('Average Spectral Efficiency (bps/Hz)')

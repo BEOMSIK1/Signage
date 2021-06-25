@@ -5,12 +5,12 @@ fft_size = 64;
 mod_type = 4;                     %1 - BPSK, 2 - QPSK, 4 - 16QAM, 6 - 64QAM, 8 - 256QAM
 cp_size = fft_size / 4;
 data_size = fft_size*mod_type;
-tx_ant = 64;
-rx_ant = 1;
-N_u = 16;
+tx_ant = 8;                    % UPA (tx_ant*tx_ant = total)  , ULA (tx_ant = total)
+rx_ant = 1; 
+N_u = 8;
 N_rf = 2*N_u;
 N_s = N_u;
-snr = -10:5:20;
+snr = 0:2:20;
 path = 7;
 scatter = 10;
 iter = 300;
@@ -23,10 +23,10 @@ model.ant(rx_ant,tx_ant);
 N_tx = model.Ntx;
 N_rx = model.Nrx;
 %% test
-model.asd = 3;
-model.zsd = 3;
-model.asa = 3;
-model.zsa = 3;
+model.asd = 15;
+model.zsd = 5;
+model.asa = 15;
+model.zsa = 5;
 
 % model.fc = 30*10^9;
 % model.fs = 0.25*10^9;
@@ -67,38 +67,38 @@ for i = 1:iter
         end
         R = R/fft_size;
         [~,~,V] = svd(R);
-        F = V(:,1:N_rf);
+         F = V(:,1:N_rf);
         
-        psn1 = find(angle(F)>=0 & angle(F)<(pi/2));
-        psn2 = find(angle(F)>=(pi/2) & angle(F)<=(pi));
-        psn3 = find(angle(F)>=(-pi) & angle(F)<(-pi/2));
-        psn4 = find(angle(F)>=(-pi/2) & angle(F)<(0));
-        
-        f_mean1 = mean(angle(F(psn1)));
-        f_mean2 = mean(angle(F(psn2)));
-        f_mean3 = mean(angle(F(psn3)));
-        f_mean4 = mean(angle(F(psn4)));
+%         psn1 = find(angle(F)>=0 & angle(F)<(pi/2));
+%         psn2 = find(angle(F)>=(pi/2) & angle(F)<=(pi));
+%         psn3 = find(angle(F)>=(-pi) & angle(F)<(-pi/2));
+%         psn4 = find(angle(F)>=(-pi/2) & angle(F)<(0));
+%         
+%         f_mean1 = mean(angle(F(psn1)));
+%         f_mean2 = mean(angle(F(psn2)));
+%         f_mean3 = mean(angle(F(psn3)));
+%         f_mean4 = mean(angle(F(psn4)));
        
-%                 f_mean1 = pi/4;
-%         f_mean2 = 3*pi/4;
-%         f_mean3 = -3*pi/4;
-%         f_mean4 = -pi/4;
+                f_mean1 = pi/4;
+        f_mean2 = 3*pi/4;
+        f_mean3 = -3*pi/4;
+        f_mean4 = -pi/4;
         
-        B = 2;
+        B = 2;   % # of group = 2^B
         for ant = 1:N_tx
              sw = zeros(2^B,N_rf);
              sp = zeros(1,2^B);
             for rf = 1:N_rf
-                if angle(F(ant,rf))>=0 & angle(F(ant,rf))<(pi/2)
+                if angle(F(ant,rf))>=0 && angle(F(ant,rf))<(pi/2)
                     sw(1,rf) = 1; 
                     sp(1) = 1;
-                elseif angle(F(ant,rf))>=(pi/2) & angle(F(ant,rf))<=(pi)
+                elseif angle(F(ant,rf))>=(pi/2) && angle(F(ant,rf))<=(pi)
                     sw(2,rf) = 1; 
                     sp(2) = 1;
-                elseif angle(F(ant,rf))>=(-pi) & angle(F(ant,rf))<(-pi/2)
+                elseif angle(F(ant,rf))>=(-pi) && angle(F(ant,rf))<(-pi/2)
                     sw(3,rf) = 1; 
                     sp(3) = 1;
-                elseif angle(F(ant,rf))>=(-pi/2) & angle(F(ant,rf))<(0)
+                elseif angle(F(ant,rf))>=(-pi/2) && angle(F(ant,rf))<(0)
                     sw(4,rf) = 1; 
                     sp(4) = 1;
                 end
